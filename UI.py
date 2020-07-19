@@ -165,3 +165,53 @@ MyUI = UI(root)
 
 
 mainloop()
+
+
+from pandas import *
+import pandas as pd
+import numpy as np
+import tabula
+import PyPDF2
+import sys
+def convert_pdf_csv(pdf_file,output):
+    reader = PyPDF2.PdfFileReader(open(pdf_file, mode='rb'))
+    m = reader.getNumPages()
+    data = tabula.read_pdf(pdf_file, encoding='utf-8', spreadsheet=True, pages='1-%d'% m)
+    value = data.keys()
+    header = data.keys()
+    data1 =  data
+    data1 = data.applymap(str)
+    for col in header:
+        for words in value:
+            data[col] = data[col].replace(words, '')
+            data1[col] = data1[col].replace(words, '')
+    if 'Unnamed: 0' in header:
+        del data['Unnamed: 0']
+    if 'TRANSACTI\rNG\rPERSON' in header:
+        data['TRANSACTI\rNG\rPERSON'] = data['TRANSACTI\rNG\rPERSON'].replace(to_replace=r'\r',value=' ',regex=True)
+        data1['TRANSACTI\rNG\rPERSON'] = data1['TRANSACTI\rNG\rPERSON'].replace(to_replace=r'\r', value=' ', regex=True)
+        indexas= data1[data1['ACCOUNT'] == 'nan'].index
+        indexas2 = data1[data1['ACCOUNT'] == ''].index
+        data.drop(indexas, inplace=True)
+        data.drop(indexas2, inplace=True)
+    if 'ACTDATETI\rME' in header:
+        data['OWNER'] = data['OWNER'].replace(to_replace=r'\r', value=' ', regex=True)
+        data1['OWNER'] = data['OWNER'].replace(to_replace=r'\r', value=' ', regex=True)
+        data['ACTDATETI\rME'] = data['ACTDATETI\rME'].replace(to_replace=r'\r', value=' ', regex=True)
+        data1['ACTDATETI\rME'] = data1['ACTDATETI\rME'].replace(to_replace=r'\r', value=' ', regex=True)
+        indexas = data1[data1['ACTDATETI\rME'] == 'nan'].index
+        indexas2 = data1[data1['ACTDATETI\rME'] == ''].index
+        data.drop(indexas, inplace=True)
+        data.drop(indexas2, inplace=True)
+
+    data.to_csv(output, index=False, header=True,)
+
+
+if __name__ == "__main__":
+    if len(sys.argv)==3:
+        pdf_file = sys.argv[1]
+        output = sys.argv[2]
+        convert_pdf_csv(pdf_file, output)
+
+convert_pdf_csv(r'pdf/PHP VALUATION 2020-01-31.pdf','pdf/PHP VALUATION 2020-01-31.pdf.csv')
+
